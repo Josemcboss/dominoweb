@@ -1,5 +1,4 @@
-
-import type { Game, Player, Tile, Move, GameState, RoundResult } from '../types.ts';
+import type { Game, Player, Tile, Move, GameState, RoundResult } from '../types';
 
 const WINNING_SCORE = 200;
 const GAMES_STORAGE_KEY = 'domino-games';
@@ -268,7 +267,6 @@ export const startGame = (gameId: string, playerId: string) => {
     
     const updatedGame = _startRoundLogic(game, 0);
 
-    games[gameId] = updatedGame;
     saveGames(games);
 }
 
@@ -282,7 +280,6 @@ export const makeMove = (gameId: string, playerId: string, move: Move) => {
 
     game = _applyMove(game, playerIndex, move);
     
-    games[gameId] = game;
     saveGames(games);
 }
 
@@ -293,8 +290,6 @@ export const startNewRound = (gameId: string, playerId: string) => {
 
     const nextStarter = (game.roundStarterIndex + 1) % 4;
     const updatedGame = _startRoundLogic(game, nextStarter);
-
-    games[gameId] = updatedGame;
     saveGames(games);
 }
 
@@ -305,8 +300,6 @@ export const resetGame = (gameId: string, playerId: string) => {
 
     game.scores = { A: 0, B: 0 };
     const updatedGame = _startRoundLogic(game, 0);
-
-    games[gameId] = updatedGame;
     saveGames(games);
 }
 
