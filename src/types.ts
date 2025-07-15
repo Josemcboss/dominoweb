@@ -12,6 +12,7 @@ export interface Player {
   hand: Tile[];
   team: 'A' | 'B';
   isHost: boolean;
+  isBot?: boolean;
 }
 
 export interface RoundResult {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Tile, Game, Player } from './types.ts';
 import * as gameService from './services/gameService';
@@ -8,6 +7,7 @@ import Scoreboard from './components/Scoreboard.tsx';
 import EndGameModal from './components/EndGameModal.tsx';
 import GameStatus from './components/GameStatus.tsx';
 import Lobby from './components/Lobby.tsx';
+import { testFirebaseConnection } from './testFirebaseConnection';
 
 const App: React.FC = () => {
   const [game, setGame] = useState<Game | null>(null);
@@ -107,8 +107,37 @@ const App: React.FC = () => {
       gameService.resetGame(game.id, playerId);
   }
   
+  const handleAddBots = () => {
+    if (!game || !playerId) return;
+    // Solo el host puede agregar bots y solo si hay menos de 4 jugadores
+    if (!game.players.find(p => p.id === playerId)?.isHost) return;
+    const botsToAdd = 4 - game.players.length;
+    if (botsToAdd <= 0) return;
+    for (let i = 0; i < botsToAdd; i++) {
+      const botName = `Bot ${i + 1}`;
+      const botId = `bot_${Math.random().toString(36).substring(2, 10)}`;
+      const botTeam = (game.players.length + i) % 2 === 0 ? 'A' : 'B';
+      const botPlayer: Player = { id: botId, name: botName, hand: [], team: botTeam, isHost: false, isBot: true };
+      const updatedGame = gameService.getGame(game.id);
+      if (updatedGame) {
+        updatedGame.players.push(botPlayer);
+        updatedGame.gameMessage = `${botName} se ha unido como bot.`;
+        gameService.makeMove(game.id, botId, { action: 'pass' }); // Para que se registre en localStorage
+        gameService.leaveGame(game.id, botId); // Para forzar update
+        const games = JSON.parse(localStorage.getItem('domino-games') || '{}');
+        games[game.id] = updatedGame;
+        localStorage.setItem('domino-games', JSON.stringify(games));
+        setGame({ ...updatedGame });
+      }
+    }
+  };
+
+  useEffect(() => {
+    testFirebaseConnection();
+  }, []);
+
   if (!game || !playerId) {
-    return <Lobby onCreateGame={handleCreateGame} onJoinGame={handleJoinGame} />;
+    return <Lobby onCreateGame={handleCreateGame} onJoinGame={handleJoinGame} onAddBots={handleAddBots} />;
   }
 
   const self = game.players.find(p => p.id === playerId);
@@ -134,6 +163,35 @@ const App: React.FC = () => {
   const currentPlayer = game.players[game.currentPlayerIndex];
   const isMyTurn = currentPlayer?.id === playerId;
   const canPlayerPlay = self.hand.some(isValidMove);
+
+  // --- BOT TURN LOGIC ---
+  React.useEffect(() => {
+    if (!game || game.gameState !== 'PLAYING') return;
+    const bot = game.players[game.currentPlayerIndex];
+    if (bot.isBot) {
+      // BOT AVANZADO: prioriza dobles, luego fichas con mayor suma, luego pasar
+      let validTiles = bot.hand.filter(tile => {
+        if (game.layout.length === 0) return true;
+        const [start, end] = game.layoutEnds;
+        return tile.a === start || tile.a === end || tile.b === start || tile.b === end;
+      });
+      // Prioridad: dobles primero
+      validTiles = validTiles.sort((a, b) => {
+        if (a.a === a.b && b.a !== b.b) return -1;
+        if (a.a !== a.b && b.a === b.b) return 1;
+        // Si ambos son dobles o ambos no, prioriza suma mayor
+        return (b.a + b.b) - (a.a + a.b);
+      });
+      const bestTile = validTiles[0];
+      setTimeout(() => {
+        if (bestTile) {
+          gameService.makeMove(game.id, bot.id, { action: 'play', tile: bestTile });
+        } else {
+          gameService.makeMove(game.id, bot.id, { action: 'pass' });
+        }
+      }, 800); // Espera breve para simular "pensar"
+    }
+  }, [game]);
   
   if (game.gameState === 'WAITING_FOR_PLAYERS') {
       return (

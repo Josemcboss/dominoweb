@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 interface LobbyProps {
   onCreateGame: (playerName: string) => void;
   onJoinGame: (gameId: string, playerName:string) => void;
+  onAddBots?: () => void;
 }
 
-const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame }) => {
+const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame, onAddBots }) => {
   const [playerName, setPlayerName] = useState('');
   const [gameId, setGameId] = useState('');
   const [showJoin, setShowJoin] = useState(false);
@@ -68,6 +69,11 @@ const Lobby: React.FC<LobbyProps> = ({ onCreateGame, onJoinGame }) => {
                         Unirse a una Partida
                     </button>
                 </div>
+            )}
+            {onAddBots && (
+                <button onClick={onAddBots} className="w-full bg-blue-500 text-white font-bold py-3 rounded-lg hover:bg-blue-600 transition-colors text-xl mt-2">
+                    Agregar Bots
+                </button>
             )}
         </div>
     </div>
