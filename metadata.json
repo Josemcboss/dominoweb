@@ -1,0 +1,5 @@
+{
+  "name": "Dominó Dominicano",
+  "description": "An online dominoes game that implements the classic Dominican rules. Play against AI opponents in this strategic four-player game. The first team to 200 points wins!",
+  "requestFramePermissions": []
+}
