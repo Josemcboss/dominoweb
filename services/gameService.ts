@@ -1,8 +1,24 @@
-import type { Game, Player, Tile, Move, RoundResult } from '../types';
+import type { Game, Player, Tile, Move, GameState, RoundResult } from '../types';
 
 const WINNING_SCORE = 200;
 const GAMES_STORAGE_KEY = 'domino-games';
 
+    
+          
+            
+    
+
+          
+          Expand Down
+          
+            
+    
+
+          
+          Expand Up
+    
+    @@ -265,7 +265,7 @@ export const startGame = (gameId: string, playerId: string) => {
+  
 // --- Helper Functions ---
 const getGames = (): Record<string, Game> => {
   try {
@@ -12,11 +28,9 @@ const getGames = (): Record<string, Game> => {
     return {};
   }
 };
-
 const saveGames = (games: Record<string, Game>) => {
   localStorage.setItem(GAMES_STORAGE_KEY, JSON.stringify(games));
 };
-
 const createDeck = (): Tile[] => {
   const tiles: Tile[] = [];
   for (let i = 0; i <= 6; i++) {
@@ -26,7 +40,6 @@ const createDeck = (): Tile[] => {
   }
   return tiles;
 };
-
 // --- Game Logic Functions (moved from App.tsx) ---
 const _startRoundLogic = (game: Game, starterIndex: number): Game => {
     const deck = createDeck();
@@ -35,9 +48,7 @@ const _startRoundLogic = (game: Game, starterIndex: number): Game => {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
-
     game.players.forEach(p => p.hand = []);
-
     for (let i = 0; i < 7; i++) {
         for (let j = 0; j < 4; j++) {
             const tile = deck.pop();
@@ -58,7 +69,6 @@ const _startRoundLogic = (game: Game, starterIndex: number): Game => {
     } else {
         startingPlayerIndex = starterIndex;
     }
-
     game.layout = [];
     game.layoutEnds = [null, null];
     game.currentPlayerIndex = startingPlayerIndex;
@@ -67,10 +77,8 @@ const _startRoundLogic = (game: Game, starterIndex: number): Game => {
     game.gameState = 'PLAYING';
     game.roundResult = null;
     game.gameMessage = `Inicia la ronda. Empieza ${game.players[startingPlayerIndex].name}.`;
-
     return game;
 }
-
 const _endRoundLogic = (game: Game, result: RoundResult): Game => {
     game.roundResult = result;
     const newScores = {...game.scores};
@@ -79,7 +87,6 @@ const _endRoundLogic = (game: Game, result: RoundResult): Game => {
         newScores[result.winningTeam] += 25;
     }
     game.scores = newScores;
-
     if (newScores[result.winningTeam] >= WINNING_SCORE) {
         game.gameState = 'GAME_OVER';
         game.gameMessage = `¡Juego terminado! El equipo ${result.winningTeam} gana.`;
@@ -89,7 +96,6 @@ const _endRoundLogic = (game: Game, result: RoundResult): Game => {
     }
     return game;
 }
-
 const _applyMove = (game: Game, playerIndex: number, move: Move): Game => {
     const player = game.players[playerIndex];
     
@@ -97,7 +103,6 @@ const _applyMove = (game: Game, playerIndex: number, move: Move): Game => {
     if (move.action === 'pass') {
         game.gameMessage = `${player.name} pasó.`;
         game.passes += 1;
-
         if (game.passes >= 4) { // Trancado!
             let pipCounts = game.players.map(p => ({
                 player: p,
@@ -112,10 +117,8 @@ const _applyMove = (game: Game, playerIndex: number, move: Move): Game => {
                 }
                 return winner;
             });
-
             const winner = winnerData.player;
             const totalPips = game.players.reduce((sum, p) => p === winner ? sum : sum + p.hand.reduce((s, t) => s + t.a + t.b, 0), 0);
-
             return _endRoundLogic(game, {
                 winningTeam: winner.team,
                 points: totalPips,
@@ -127,12 +130,10 @@ const _applyMove = (game: Game, playerIndex: number, move: Move): Game => {
         game.currentPlayerIndex = (game.currentPlayerIndex + 1) % 4;
         return game;
     }
-
     // Play tile
     if (move.action === 'play' && move.tile) {
         const tile = move.tile;
         player.hand = player.hand.filter(t => t.id !== tile.id);
-
         if (game.layout.length === 0) {
             game.layout = [tile];
             game.layoutEnds = tile.a === tile.b ? [tile.a, tile.b] : [tile.a, tile.b];
@@ -151,7 +152,6 @@ const _applyMove = (game: Game, playerIndex: number, move: Move): Game => {
         
         game.passes = 0;
         game.gameMessage = `${player.name} jugó ${tile.a}|${tile.b}.`;
-
         if (player.hand.length === 0) { // Domino!
             let points = 0;
             game.players.forEach(p => {
@@ -159,7 +159,6 @@ const _applyMove = (game: Game, playerIndex: number, move: Move): Game => {
                     points += p.hand.reduce((sum, t) => sum + t.a + t.b, 0);
                 }
             });
-
             // Capicúa check
             let capicua = false;
             const playedValue = game.layoutEnds.includes(tile.a) ? tile.a : tile.b;
@@ -170,7 +169,6 @@ const _applyMove = (game: Game, playerIndex: number, move: Move): Game => {
             if (winningTileValues.includes(freeEndValue!)) {
                 capicua = true;
             }
-
             return _endRoundLogic(game, {
                 winningTeam: player.team,
                 points: points,
@@ -179,26 +177,21 @@ const _applyMove = (game: Game, playerIndex: number, move: Move): Game => {
                 winnerName: player.name
             });
         }
-
         game.currentPlayerIndex = (game.currentPlayerIndex + 1) % 4;
     }
-
     return game;
 }
-
 // --- Public API ---
 export const getGame = (gameId: string): Game | null => {
     const games = getGames();
     return games[gameId] || null;
 }
-
 export const createGame = (playerName: string): { game: Game, player: Player } => {
   const games = getGames();
   const gameId = Math.random().toString(36).substring(2, 7);
   const playerId = Math.random().toString(36).substring(2, 10);
   
   const hostPlayer: Player = { id: playerId, name: playerName, hand: [], team: 'A', isHost: true };
-
   const newGame: Game = {
     id: gameId,
     players: [hostPlayer],
@@ -213,16 +206,13 @@ export const createGame = (playerName: string): { game: Game, player: Player } =
     gameMessage: 'Esperando a que se unan los jugadores...',
     hostId: playerId,
   };
-
   games[gameId] = newGame;
   saveGames(games);
   return { game: newGame, player: hostPlayer };
 };
-
 export const joinGame = (gameId: string, playerName: string): { game: Game, player: Player } => {
     const games = getGames();
     const game = games[gameId];
-
     if (!game) throw new Error("Partida no encontrada.");
     if (game.players.length >= 4) throw new Error("La partida ya está llena.");
     
@@ -236,16 +226,13 @@ export const joinGame = (gameId: string, playerName: string): { game: Game, play
     saveGames(games);
     return { game, player: newPlayer };
 }
-
 export const leaveGame = (gameId: string, playerId: string) => {
     const games = getGames();
     const game = games[gameId];
     if (!game) return;
-
     game.players = game.players.filter(p => p.id !== playerId);
     game.gameMessage = `Un jugador ha abandonado la partida.`;
     game.gameState = 'WAITING_FOR_PLAYERS'; // Reset to lobby if someone leaves
-
     if(game.players.length === 0) {
         delete games[gameId];
     } else {
@@ -258,51 +245,78 @@ export const leaveGame = (gameId: string, playerId: string) => {
     
     saveGames(games);
 }
-
-
 export const startGame = (gameId: string, playerId: string) => {
     const games = getGames();
     const game = games[gameId];
     if (!game || game.hostId !== playerId || game.players.length !== 4) return;
-    
-    _startRoundLogic(game, 0);
+
+    const updatedGame = _startRoundLogic(game, 0);
 
     saveGames(games);
 }
 
+    
+        
+          
+    
+
+        
+        Expand All
+    
+    @@ -289,7 +289,7 @@ export const startNewRound = (gameId: string, playerId: string) => {
+  
 export const makeMove = (gameId: string, playerId: string, move: Move) => {
     const games = getGames();
     let game = games[gameId];
     if (!game || game.gameState !== 'PLAYING') return;
-
     const playerIndex = game.players.findIndex(p => p.id === playerId);
     if (playerIndex !== game.currentPlayerIndex) return; // Not your turn
-
     game = _applyMove(game, playerIndex, move);
     
     saveGames(games);
 }
-
 export const startNewRound = (gameId: string, playerId: string) => {
     const games = getGames();
     const game = games[gameId];
     if(!game || !game.players.find(p=>p.id === playerId)?.isHost) return;
 
     const nextStarter = (game.roundStarterIndex + 1) % 4;
-    _startRoundLogic(game, nextStarter);
+    const updatedGame = _startRoundLogic(game, nextStarter);
     saveGames(games);
 }
 
+
+    
+        
+          
+    
+
+        
+        Expand All
+    
+    @@ -299,7 +299,7 @@ export const resetGame = (gameId: string, playerId: string) => {
+  
 export const resetGame = (gameId: string, playerId: string) => {
     const games = getGames();
     const game = games[gameId];
     if(!game || !game.players.find(p=>p.id === playerId)?.isHost) return;
 
     game.scores = { A: 0, B: 0 };
-    _startRoundLogic(game, 0);
+    const updatedGame = _startRoundLogic(game, 0);
     saveGames(games);
 }
 
+
+    
+          
+            
+    
+
+          
+          Expand Down
+    
+    
+  
 export const onGameStateUpdate = (gameId: string, callback: (game: Game | null) => void): (() => void) => {
   const handleStorageChange = (event: StorageEvent) => {
     if (event.key === GAMES_STORAGE_KEY) {
@@ -310,7 +324,6 @@ export const onGameStateUpdate = (gameId: string, callback: (game: Game | null) 
       callback(games[gameId] || null);
     }
   };
-
   // Listen to changes in other tabs
   window.addEventListener('storage', handleStorageChange);
   
@@ -324,7 +337,6 @@ export const onGameStateUpdate = (gameId: string, callback: (game: Game | null) 
         callback(games[gameId] || null);
     }
   }, 250);
-
   // Return an unsubscribe function
   return () => {
     window.removeEventListener('storage', handleStorageChange);
