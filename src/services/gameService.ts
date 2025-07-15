@@ -1,4 +1,4 @@
-import type { Game, Player, Tile, Move, RoundResult } from '../types';
+import type { Game, Player, Tile, Move, GameState, RoundResult } from '../types';
 
 const WINNING_SCORE = 200;
 const GAMES_STORAGE_KEY = 'domino-games';
@@ -265,7 +265,7 @@ export const startGame = (gameId: string, playerId: string) => {
     const game = games[gameId];
     if (!game || game.hostId !== playerId || game.players.length !== 4) return;
     
-    _startRoundLogic(game, 0);
+    const updatedGame = _startRoundLogic(game, 0);
 
     saveGames(games);
 }
@@ -289,7 +289,7 @@ export const startNewRound = (gameId: string, playerId: string) => {
     if(!game || !game.players.find(p=>p.id === playerId)?.isHost) return;
 
     const nextStarter = (game.roundStarterIndex + 1) % 4;
-    _startRoundLogic(game, nextStarter);
+    const updatedGame = _startRoundLogic(game, nextStarter);
     saveGames(games);
 }
 
@@ -299,7 +299,7 @@ export const resetGame = (gameId: string, playerId: string) => {
     if(!game || !game.players.find(p=>p.id === playerId)?.isHost) return;
 
     game.scores = { A: 0, B: 0 };
-    _startRoundLogic(game, 0);
+    const updatedGame = _startRoundLogic(game, 0);
     saveGames(games);
 }
 
