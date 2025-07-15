@@ -1,4 +1,5 @@
-
+export type GameState = 'LOBBY' | 'WAITING_FOR_PLAYERS' | 'PLAYING' | 'ROUND_OVER' | 'GAME_OVER';
+// import type { Game, Player, Tile, Move, RoundResult } from '../types';
 export interface Tile {
   id: string;
   a: number;
@@ -12,8 +13,6 @@ export interface Player {
   team: 'A' | 'B';
   isHost: boolean;
 }
-
-export type GameState = 'LOBBY' | 'WAITING_FOR_PLAYERS' | 'PLAYING' | 'ROUND_OVER' | 'GAME_OVER';
 
 export interface RoundResult {
   winningTeam: 'A' | 'B';
