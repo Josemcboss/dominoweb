@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Tile, Game, Player } from './types.ts';
-import * as gameService from './services/gameService.ts';
+import * as gameService from './services/gameService';
 import PlayerArea from './components/PlayerArea.tsx';
 import GameBoard from './components/GameBoard.tsx';
 import Scoreboard from './components/Scoreboard.tsx';

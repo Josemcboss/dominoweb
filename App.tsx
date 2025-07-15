@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Tile, Game, Player } from './types';
-import * as gameService from './services/gameService';
+import * as gameService from './src/services/gameService';
 import PlayerArea from './components/PlayerArea';
 import GameBoard from './components/GameBoard';
 import Scoreboard from './components/Scoreboard';
